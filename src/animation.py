@@ -7,43 +7,90 @@ from OpenGL.GL import *
 from OpenGL.GLU import *
 
 from src.config import load_configuration
+import math
 from src.square import Square
 
 
 class Animation:
     def __init__(self, animation_config: Optional[Union[Path, str]] = None):
         self.configuration = load_configuration(animation_config)
-        self.left_block = Square(100, 100, 200, 200, (1.0, 0, 0))
-        self.right_block = Square(400, 100, 200, 200, (1.0, 0, 0))
+        self.inside_block = Square(**self.configuration["inside_block"])
+        self.outside_block = Square(**self.configuration["outside_block"])
+        self.floor = Square(**self.configuration["floor"])
+        self.wall = Square(**self.configuration["wall"])
+        self.collisions = 0
+        self.simulation_ended = False
 
     def start_animation(self):
-
         self._init_pygame()
         self._init_openGL()
 
-        self.draw_scene()
-        pygame.display.flip()
+        self.set_up_blocks()
 
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
+            if not self.simulation_ended:
+                self.move_blocks()
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+
+            self.draw_scene()
+            pygame.display.flip()
+            pygame.time.wait(self.configuration.get("fps"))
 
     def draw_scene(self):
-        glClearColor(255, 255, 255, 0)
+        glClearColor(*Color('white'))
         glClear(GL_COLOR_BUFFER_BIT)
-        self.left_block.draw()
-        self.right_block.draw()
+        self.floor.draw()
+        self.wall.draw()
+        self.inside_block.draw()
+        self.outside_block.draw()
+
+    def move_blocks(self):
+
+        for _ in range(self.configuration.get("fps")):
+            if self.outside_block.x + self.outside_block.width > self.inside_block.x:
+
+                vel1 = ((self.outside_block.mass - self.inside_block.mass) / (
+                        self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel + (
+                               (2 * self.inside_block.mass) / (
+                               self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel
+
+                vel2 = ((self.inside_block.mass - self.outside_block.mass) / (
+                        self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel + (
+                               (2 * self.outside_block.mass) / (
+                               self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel
+
+                self.outside_block.vel = vel1
+                self.inside_block.vel = vel2
+                self.collisions += 1
+
+            elif self.inside_block.x + self.inside_block.width > 750:
+
+                self.inside_block.vel = -self.inside_block.vel
+                self.collisions += 1
+
+            self.outside_block.x += self.outside_block.vel
+            self.inside_block.x += self.inside_block.vel
+
+        blocks_ratio = int(math.log10(self.outside_block.mass / self.inside_block.mass))
+        needed_collision_number = float(str(math.pi)[:blocks_ratio]) * 10 ** (blocks_ratio - 2)
+
+        if needed_collision_number == self.collisions:
+            self.simulation_ended = True
+
+    def set_up_blocks(self):
+        self.outside_block.mass = 10000
+        self.outside_block.vel = 1 / self.configuration.get("fps")
 
     def _init_pygame(self):
         pygame.init()
         pygame.display.set_caption('3D Graphics Project')
-        w, h = self.configuration.window_width, self.configuration.window_height
-        pygame.display.set_mode((w, h), pygame.OPENGL | pygame.DOUBLEBUF)
+        pygame.display.set_mode((list(self.configuration["window"].values())), pygame.OPENGL | pygame.DOUBLEBUF)
 
     def _init_openGL(self):
         glClearColor(0.0, 0.0, 0.0, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-
-        w, h = self.configuration.window_width, self.configuration.window_height
-        gluOrtho2D(0, w, 0, h)
+        width, height = self.configuration["window"].values()
+        gluOrtho2D(0, width, 0, height)
