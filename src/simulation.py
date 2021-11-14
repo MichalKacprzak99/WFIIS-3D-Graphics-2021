@@ -18,15 +18,30 @@ COLOR_ACTIVE = (100, 200, 255)
 COLOR_LIST_INACTIVE = (255, 100, 100)
 COLOR_LIST_ACTIVE = (255, 150, 150)
 
+lastPosX = 0
+lastPosY = 0
+zoomScale = 1.0
+dataL = 0
+xRot = 0
+yRot = 0
+zRot = 0
 
-class Animation:
-    def __init__(self, animation_config: Optional[Union[Path, str]] = None):
+
+class Simulation:
+    def __init__(self, simulation_config: Optional[Union[Path, str]] = None):
         # Configuration
-        self.configuration = load_configuration(animation_config)
+        self.configuration = load_configuration(simulation_config)
 
         # Initialize
         self._init_pygame()
         self._init_openGL()
+
+        # Initialize camera values
+        width, height = self.configuration["window"].values()
+        self.left = 0
+        self.right = width
+        self.bottom = 0
+        self.top = height
 
         # Constants
         self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
@@ -51,27 +66,32 @@ class Animation:
 
         self.collisions_number = 0
 
-    def start_animation(self):
+    def start_simulation(self):
         clock = pygame.time.Clock()
+        width, height = self.configuration["window"].values()
+        gluPerspective(45, (1.0 * (width / height)), 0.1, 50.0)
+        glTranslatef(0.0, 0.0, -5)
 
         while True:
+
             event_list = pygame.event.get()
             for event in event_list:
                 if event.type == QUIT:
                     return
                 if event.type == pygame.KEYDOWN:
-                    start_conditions = all([event.key == pygame.K_SPACE,
-                                            not self.simulation_started,
-                                            self.outside_block_weight_select.valid_option])
-                    if start_conditions:
+                    simulation_start_conditions = all([event.key == pygame.K_SPACE,
+                                                       not self.simulation_started,
+                                                       self.outside_block_weight_select.valid_option])
+                    if simulation_start_conditions:
                         self.simulation_started = True
-                        self.start_simulation()
-                    if event.key == K_r:
-                        self.reset_scene()
 
+                        # Starts outside block movement
+                        self.outside_block.vel = 1 / self.configuration.get("fps")
+                    if event.key == K_r:
+                        self.reset_simulation()
+                self.mouse_scroll(event)
             selected_option = self.outside_block_weight_select.update(event_list)
             if selected_option >= 0:
-
                 self.outside_block.mass = int(self.outside_block_weight_select.main)
 
             if self.simulation_started and not self.simulation_ended:
@@ -83,9 +103,6 @@ class Animation:
 
             clock.tick(self.configuration.get("fps"))
 
-    def start_simulation(self):
-        self.outside_block.vel = 1 / self.configuration.get("fps")
-
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
         glLoadIdentity()
@@ -95,8 +112,7 @@ class Animation:
         self._draw_scene()
 
     def _draw_scene(self):
-        width, height = self.configuration["window"].values()
-        gluOrtho2D(0, width, 0, height)
+        gluOrtho2D(self.left, self.right, self.bottom, self.top)
         self.floor.draw()
         self.wall.draw()
         self.inside_block.draw()
@@ -108,26 +124,38 @@ class Animation:
         draw_text(**self.configuration.get("instruction_text"))
 
     def move_blocks(self):
-        wall_collision = self.configuration["window"].get("width") - self.wall.width
+        """Handles blocks movement and detects collisions
+
+        Number of collision increase when:
+            - two block collide
+            - inside block collides with wall
+        """
+
+        # Additional loop for better calculation
         for _ in range(self.configuration.get("fps")):
+
+            # Check if blocks collide
             if self.outside_block.x + self.outside_block.width > self.inside_block.x:
 
-                vel1 = ((self.outside_block.mass - self.inside_block.mass) / (
+                # Calculate new velocity for blocks
+                outside_block_vel = ((self.outside_block.mass - self.inside_block.mass) / (
                         self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel + (
-                               (2 * self.inside_block.mass) / (
-                               self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel
+                                            (2 * self.inside_block.mass) / (
+                                            self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel
 
-                vel2 = ((self.inside_block.mass - self.outside_block.mass) / (
+                inside_block_vel = ((self.inside_block.mass - self.outside_block.mass) / (
                         self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel + (
-                               (2 * self.outside_block.mass) / (
-                               self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel
+                                           (2 * self.outside_block.mass) / (
+                                           self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel
 
-                self.outside_block.vel = vel1
-                self.inside_block.vel = vel2
+                self.outside_block.vel = outside_block_vel
+                self.inside_block.vel = inside_block_vel
+
                 self.collisions_number += 1
                 self.collision_sound.play()
 
-            elif self.inside_block.x + self.inside_block.width > wall_collision:
+            # Check if block collide with wall
+            elif self.inside_block.x + self.inside_block.width > self.wall.x:
                 self.inside_block.vel = -self.inside_block.vel
                 self.collisions_number += 1
                 self.collision_sound.play()
@@ -135,29 +163,55 @@ class Animation:
             self.outside_block.x += self.outside_block.vel
             self.inside_block.x += self.inside_block.vel
 
+        # Stop simulation if collisions number reached
         blocks_ratio = int(math.log10(self.outside_block.mass / self.inside_block.mass))
         needed_collisions_number = int(float(str(math.pi)[:blocks_ratio + 1]) * 10 ** (blocks_ratio / 2))
         if needed_collisions_number == self.collisions_number:
-            self.simulation_ended = True
+            if self.outside_block.vel < 0 and abs(
+                    self.outside_block.x - self.inside_block.x) > 10 * self.inside_block.width:
+                self.simulation_ended = True
 
-    def reset_scene(self):
+    def reset_simulation(self):
+        """Resets simulation when R key pressed"""
         self.collisions_number = 0
+
         self.simulation_ended = False
         self.simulation_started = False
-        self.inside_block = Square(**self.configuration["inside_block"])
-        self.outside_block = Square(**self.configuration["outside_block"])
+
         self.outside_block_weight_select.reset()
 
+        # Reset blocks position
+        self.inside_block = Square(**self.configuration["inside_block"])
+        self.outside_block = Square(**self.configuration["outside_block"])
+
+    def mouse_scroll(self, event: pygame.event):
+        global lastPosX, lastPosY, zoomScale, xRot, yRot, zRot
+
+        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:  # wheel rolled up
+            self.left += 50
+            self.right -= 50
+            self.bottom += 50
+            self.top -= 50
+
+        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:  # wheel rolled down
+            self.bottom -= 50
+            self.top += 50
+            self.left -= 50
+            self.right += 50
+            self.floor.x -= 50
+            self.floor.width += 50
+
     def _init_pygame(self):
+        """Initializes Pygame"""
         pygame.init()
         pygame.display.set_caption(self.configuration.get("title"))
         pygame.display.set_mode((list(self.configuration["window"].values())), pygame.OPENGL | pygame.DOUBLEBUF)
 
     def _init_openGL(self):
+        """Initializes OpenGl"""
         width, height = self.configuration["window"].values()
         glEnable(GL_BLEND)
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
         glViewport(0, 0, width, height)
         glMatrixMode(GL_PROJECTION)
         glMatrixMode(GL_MODELVIEW)
-        glLoadIdentity()

@@ -1,4 +1,4 @@
-from src.animation import Animation
+from src.simulation import Simulation
 
 if __name__ == '__main__':
-    Animation().start_animation()
+    Simulation().start_simulation()
