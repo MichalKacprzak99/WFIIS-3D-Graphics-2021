@@ -1,15 +1,19 @@
-from typing import Union
+from typing import Sequence, Union
 
 import pygame
 from OpenGL.GL import *
 
-
-def draw_text(x: int, y: int, text: str, font_name: str, font_size: int, color: Union[tuple, pygame.Color]):
+def draw_text(x: int, y: int, text: str, font_name: str, font_size: int, color: Union[Sequence, pygame.Color, str]):
     font = pygame.font.SysFont(font_name, font_size)
-    textSurface = font.render(text, True, color).convert_alpha()
-    textData = pygame.image.tostring(textSurface, "RGBA", True)
-    glWindowPos2d(x, y)
-    glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
+
+    lines = text.splitlines()
+
+    for i, line in enumerate(lines):
+        # screen.blit(sys_font.render(l, 0, hecolor), (x, y + fsize * i))
+        textSurface = font.render(line, True, color).convert_alpha()
+        textData = pygame.image.tostring(textSurface, "RGBA", True)
+        glWindowPos2d(x, y - font_size * i)
+        glDrawPixels(textSurface.get_width(), textSurface.get_height(), GL_RGBA, GL_UNSIGNED_BYTE, textData)
 
 
 def surface_to_texture(pygame_surface, texture_id):
