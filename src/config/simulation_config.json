@@ -1,6 +1,6 @@
 {
   "title": "3D Graphics Project",
-  "fps": 50,
+  "fps": 120,
   "window": {
 	"width": 800,
 	"height": 600

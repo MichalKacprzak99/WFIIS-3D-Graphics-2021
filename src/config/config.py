@@ -11,7 +11,7 @@ def load_configuration(config_file: Union[Path, str] = None) -> dict:
     :return: configuration data
     """
     if not config_file:
-        config_file = Path(__file__).parent / 'animation_config.json'
+        config_file = Path(__file__).parent / 'simulation_config.json'
     with open(config_file) as fp:
         config_data = json.load(fp)
         return config_data
