@@ -10,21 +10,14 @@ from OpenGL.GLU import *
 from src.config import load_configuration
 from src.square import Square
 from src.ui_elements import DropDown
-from src.utils import draw_text
+from src.utils.utils import calculate_velocity
+from src.utils.drawing_utils import draw_text
 
 # COLORS
 COLOR_INACTIVE = (100, 80, 255)
 COLOR_ACTIVE = (100, 200, 255)
 COLOR_LIST_INACTIVE = (255, 100, 100)
 COLOR_LIST_ACTIVE = (255, 150, 150)
-
-lastPosX = 0
-lastPosY = 0
-zoomScale = 1.0
-dataL = 0
-xRot = 0
-yRot = 0
-zRot = 0
 
 
 class Simulation:
@@ -38,10 +31,10 @@ class Simulation:
 
         # Initialize camera values
         width, height = self.configuration["window"].values()
-        self.left = 0
-        self.right = width
-        self.bottom = 0
-        self.top = height
+        self.camera_left = 0
+        self.camera_right = width
+        self.camera_bottom = 0
+        self.camera_top = height
 
         # Constants
         self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
@@ -112,7 +105,7 @@ class Simulation:
         self._draw_scene()
 
     def _draw_scene(self):
-        gluOrtho2D(self.left, self.right, self.bottom, self.top)
+        gluOrtho2D(self.camera_left, self.camera_right, self.camera_bottom, self.camera_top)
         self.floor.draw()
         self.wall.draw()
         self.inside_block.draw()
@@ -130,7 +123,6 @@ class Simulation:
             - two block collide
             - inside block collides with wall
         """
-
         # Additional loop for better calculation
         for _ in range(self.configuration.get("fps")):
 
@@ -138,15 +130,8 @@ class Simulation:
             if self.outside_block.x + self.outside_block.width > self.inside_block.x:
 
                 # Calculate new velocity for blocks
-                outside_block_vel = ((self.outside_block.mass - self.inside_block.mass) / (
-                        self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel + (
-                                            (2 * self.inside_block.mass) / (
-                                            self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel
-
-                inside_block_vel = ((self.inside_block.mass - self.outside_block.mass) / (
-                        self.outside_block.mass + self.inside_block.mass)) * self.inside_block.vel + (
-                                           (2 * self.outside_block.mass) / (
-                                           self.outside_block.mass + self.inside_block.mass)) * self.outside_block.vel
+                outside_block_vel = calculate_velocity(self.outside_block, self.inside_block)
+                inside_block_vel = calculate_velocity(self.inside_block, self.outside_block)
 
                 self.outside_block.vel = outside_block_vel
                 self.inside_block.vel = inside_block_vel
@@ -185,19 +170,17 @@ class Simulation:
         self.outside_block = Square(**self.configuration["outside_block"])
 
     def mouse_scroll(self, event: pygame.event):
-        global lastPosX, lastPosY, zoomScale, xRot, yRot, zRot
-
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 4:  # wheel rolled up
-            self.left += 50
-            self.right -= 50
-            self.bottom += 50
-            self.top -= 50
+            self.camera_left += 50
+            self.camera_right -= 50
+            self.camera_bottom += 50
+            self.camera_top -= 50
 
         elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 5:  # wheel rolled down
-            self.bottom -= 50
-            self.top += 50
-            self.left -= 50
-            self.right += 50
+            self.camera_bottom -= 50
+            self.camera_top += 50
+            self.camera_left -= 50
+            self.camera_right += 50
             self.floor.x -= 50
             self.floor.width += 50
 
