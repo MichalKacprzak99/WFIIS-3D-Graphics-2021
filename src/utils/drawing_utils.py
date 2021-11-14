@@ -3,6 +3,7 @@ from typing import Sequence, Union
 import pygame
 from OpenGL.GL import *
 
+
 def draw_text(x: int, y: int, text: str, font_name: str, font_size: int, color: Union[Sequence, pygame.Color, str]):
     font = pygame.font.SysFont(font_name, font_size)
 
