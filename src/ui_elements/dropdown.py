@@ -3,7 +3,7 @@ from typing import List, Optional
 import pygame
 from OpenGL.GL import *
 
-from src.utils import draw_texture, surface_to_texture
+from src.utils.drawing_utils import draw_texture, surface_to_texture
 
 
 class DropDown:
