@@ -142,6 +142,7 @@ class Animation:
         self.start_simulation = False
         self.inside_block = Square(**self.configuration["inside_block"])
         self.outside_block = Square(**self.configuration["outside_block"])
+        self.outside_block_weight_select.reset()
 
     def _init_pygame(self):
         pygame.init()
