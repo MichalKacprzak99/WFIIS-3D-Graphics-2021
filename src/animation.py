@@ -47,7 +47,7 @@ class Animation:
 
         # Simulation control flags
         self.simulation_ended = False
-        self.start_simulation = False
+        self.simulation_started = False
 
         self.collisions_number = 0
 
@@ -60,18 +60,21 @@ class Animation:
                 if event.type == QUIT:
                     return
                 if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE and not self.start_simulation:
-                        self.start_simulation = True
-                        self.set_up_blocks()
+                    start_conditions = all([event.key == pygame.K_SPACE,
+                                            not self.simulation_started,
+                                            self.outside_block_weight_select.valid_option])
+                    if start_conditions:
+                        self.simulation_started = True
+                        self.start_simulation()
                     if event.key == K_r:
                         self.reset_scene()
 
             selected_option = self.outside_block_weight_select.update(event_list)
             if selected_option >= 0:
-                self.outside_block_weight_select.main = self.outside_block_weight_select.options[selected_option]
+
                 self.outside_block.mass = int(self.outside_block_weight_select.main)
 
-            if self.start_simulation and not self.simulation_ended:
+            if self.simulation_started and not self.simulation_ended:
                 self.move_blocks()
 
             self.draw()
@@ -80,7 +83,7 @@ class Animation:
 
             clock.tick(self.configuration.get("fps"))
 
-    def set_up_blocks(self):
+    def start_simulation(self):
         self.outside_block.vel = 1 / self.configuration.get("fps")
 
     def draw(self):
@@ -140,7 +143,7 @@ class Animation:
     def reset_scene(self):
         self.collisions_number = 0
         self.simulation_ended = False
-        self.start_simulation = False
+        self.simulation_started = False
         self.inside_block = Square(**self.configuration["inside_block"])
         self.outside_block = Square(**self.configuration["outside_block"])
         self.outside_block_weight_select.reset()

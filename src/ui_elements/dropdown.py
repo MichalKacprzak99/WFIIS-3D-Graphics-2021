@@ -22,6 +22,7 @@ class DropDown:
         self.draw_menu = False
         self.menu_active = False
         self.active_option = -1
+        self.valid_option = False
 
     def draw(self):
         self.surface.fill("white")
@@ -61,11 +62,14 @@ class DropDown:
                     self.draw_menu = not self.draw_menu
                 elif self.draw_menu and self.active_option >= 0:
                     self.draw_menu = False
+                    self.valid_option = True
+                    self.main = self.options[self.active_option]
                     return self.active_option
         return -1
 
     def reset(self):
         self.main = self.default
+        self.valid_option = False
 
     def _init_pygame(self):
         self.surface = pygame.Surface((800, 600))
