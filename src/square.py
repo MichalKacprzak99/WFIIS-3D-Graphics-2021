@@ -17,3 +17,8 @@ class Square:
     def draw(self):
         glColor3f(*self.color)
         glRectd(self.x, self.y, self.x + self.width, self.y + self.height)
+
+    def set_size(self, exp):
+        self.x -= self.width * exp / 3
+        self.width *= (exp / 3 + 1)
+        self.height *= (exp / 3 + 1)

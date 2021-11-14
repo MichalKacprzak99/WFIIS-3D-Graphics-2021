@@ -86,6 +86,7 @@ class Simulation:
             selected_option = self.outside_block_weight_select.update(event_list)
             if selected_option >= 0:
                 self.outside_block.mass = int(self.outside_block_weight_select.main)
+                self.outside_block.set_size(self.outside_block_weight_select.active_option)
 
             if self.simulation_started and not self.simulation_ended:
                 self.move_blocks()
