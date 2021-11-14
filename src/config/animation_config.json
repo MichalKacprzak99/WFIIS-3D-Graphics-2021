@@ -1,8 +1,9 @@
 {
+  "title": "3D Graphics Project",
   "fps": 50,
   "window": {
-	"window_width": 800,
-	"window_height": 600
+	"width": 800,
+	"height": 600
   },
   "floor": {
 	"x": 0,
@@ -47,5 +48,35 @@
 	  0,
 	  0
 	]
+  },
+  "outside_block_weigh_selector": {
+	"x": 400,
+	"y": 80,
+	"width": 300,
+	"height": 50,
+	"font_name": null,
+	"font_size": 30,
+	"main": "Select outside block weight",
+	"options": [
+	  "1",
+	  "100",
+	  "10000",
+	  "1000000"
+	]
+  },
+  "collision_text": {
+	"x": 50,
+	"y": 480,
+	"font_name": "arial",
+	"font_size": 32,
+	"color": "black"
+  },
+  "instruction_text": {
+	"x": 50,
+	"y": 550,
+	"font_name": "arial",
+	"font_size": 27,
+	"color": "black",
+	"text": "Select outside block weight. Press space to start. Press R to reset."
   }
 }
