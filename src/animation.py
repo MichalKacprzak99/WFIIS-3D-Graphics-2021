@@ -14,16 +14,24 @@ from src.utils import drawText
 
 class Animation:
     def __init__(self, animation_config: Optional[Union[Path, str]] = None):
+        # Constants
         self.configuration = load_configuration(animation_config)
-        self.inside_block = Square(**self.configuration["inside_block"])
-        self.outside_block = Square(**self.configuration["outside_block"])
-        self.floor = Square(**self.configuration["floor"])
-        self.wall = Square(**self.configuration["wall"])
-        self.collisions_number = 0
-        self.simulation_ended = False
-        self.start_simulation = False
         pygame.mixer.init()
         self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
+
+        # Scene
+        self.floor = Square(**self.configuration["floor"])
+        self.wall = Square(**self.configuration["wall"])
+
+        # Blocks
+        self.inside_block = Square(**self.configuration["inside_block"])
+        self.outside_block = Square(**self.configuration["outside_block"])
+
+        # Simulation control flags
+        self.simulation_ended = False
+        self.start_simulation = False
+
+        self.collisions_number = 0
 
     def start_animation(self):
         self._init_pygame()
@@ -44,8 +52,9 @@ class Animation:
                 self.move_blocks()
 
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            drawText(0, 550, f"Number of collisions: {self.collisions_number}", "arial", 32, Color('black'))
+
             self.draw_scene()
+
             pygame.display.flip()
             pygame.time.wait(self.configuration.get("fps"))
 
@@ -54,6 +63,8 @@ class Animation:
         self.outside_block.vel = 1 / self.configuration.get("fps")
 
     def draw_scene(self):
+        drawText(0, 550, f"Number of collisions: {self.collisions_number}", "arial", 32, Color('black'))
+
         self.floor.draw()
         self.wall.draw()
         self.inside_block.draw()
