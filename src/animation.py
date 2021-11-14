@@ -29,8 +29,6 @@ class Animation:
         self._init_pygame()
         self._init_openGL()
 
-        self.set_up_blocks()
-
         while True:
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -38,6 +36,9 @@ class Animation:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         self.start_simulation = True
+                        self.set_up_blocks()
+                    if event.key == K_r:
+                        self.reset_scene()
 
             if self.start_simulation and not self.simulation_ended:
                 self.move_blocks()
@@ -47,6 +48,10 @@ class Animation:
             self.draw_scene()
             pygame.display.flip()
             pygame.time.wait(self.configuration.get("fps"))
+
+    def set_up_blocks(self):
+        self.outside_block.mass = 1
+        self.outside_block.vel = 1 / self.configuration.get("fps")
 
     def draw_scene(self):
         self.floor.draw()
@@ -83,14 +88,17 @@ class Animation:
             self.inside_block.x += self.inside_block.vel
 
         blocks_ratio = int(math.log10(self.outside_block.mass / self.inside_block.mass))
-        needed_collision_number = float(str(math.pi)[:blocks_ratio]) * 10 ** (blocks_ratio - 2)
-
-        if needed_collision_number == self.collisions_number:
+        power = blocks_ratio - 1 if blocks_ratio >= 2 else 0
+        needed_collisions_number = int(float(str(math.pi)[:blocks_ratio+1]) * 10 ** power)
+        if needed_collisions_number == self.collisions_number:
             self.simulation_ended = True
 
-    def set_up_blocks(self):
-        self.outside_block.mass = 10000
-        self.outside_block.vel = 1 / self.configuration.get("fps")
+    def reset_scene(self):
+        self.collisions_number = 0
+        self.simulation_ended = False
+        self.start_simulation = False
+        self.inside_block = Square(**self.configuration["inside_block"])
+        self.outside_block = Square(**self.configuration["outside_block"])
 
     def _init_pygame(self):
         pygame.init()
