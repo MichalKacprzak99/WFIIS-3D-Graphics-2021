@@ -1,26 +1,11 @@
 import json
-from functools import singledispatch
+from functools import lru_cache
 from pathlib import Path
-from types import SimpleNamespace
-from typing import List, Union
+from typing import Union
 
 
-@singledispatch
-def wrap_namespace(ob) -> SimpleNamespace:
-    return ob
-
-
-@wrap_namespace.register(dict)
-def _wrap_dict(ob) -> SimpleNamespace:
-    return SimpleNamespace(**{k: wrap_namespace(v) for k, v in ob.items()})
-
-
-@wrap_namespace.register(list)
-def _wrap_list(ob) -> List[SimpleNamespace]:
-    return [wrap_namespace(v) for v in ob]
-
-
-def load_configuration(config_file: Union[Path, str] = None) -> SimpleNamespace:
+@lru_cache(maxsize=1)
+def load_configuration(config_file: Union[Path, str] = None) -> dict:
     """Loads json configuration file and validates against json schema.
     :param config_file: path to config file
     :return: configuration data
@@ -29,5 +14,4 @@ def load_configuration(config_file: Union[Path, str] = None) -> SimpleNamespace:
         config_file = Path(__file__).parent / 'animation_config.json'
     with open(config_file) as fp:
         config_data = json.load(fp)
-
-        return wrap_namespace(config_data)
+        return config_data
