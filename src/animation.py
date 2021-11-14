@@ -21,6 +21,7 @@ class Animation:
         self.wall = Square(**self.configuration["wall"])
         self.collisions_number = 0
         self.simulation_ended = False
+        self.start_simulation = False
 
     def start_animation(self):
         self._init_pygame()
@@ -32,8 +33,13 @@ class Animation:
             for event in pygame.event.get():
                 if event.type == QUIT:
                     return
-            if not self.simulation_ended:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.start_simulation = True
+
+            if self.start_simulation and not self.simulation_ended:
                 self.move_blocks()
+
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
             drawText(0, 550, f"Number of collisions: {self.collisions_number}", "arial", 32, Color('black'))
             self.draw_scene()
