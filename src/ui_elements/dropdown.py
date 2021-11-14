@@ -7,14 +7,14 @@ from src.utils import draw_texture, surface_to_texture
 
 
 class DropDown:
-    def __init__(self, color_menu, color_option, x: int, y: int, w: int, h: int,
+    def __init__(self, color_menu, color_option, x: int, y: int, width: int, height: int,
                  font_name: str, font_size: int, main: str, options: List[str], default: Optional[str] = None):
 
         self._init_pygame()
         self._init_openGL()
         self.color_menu = color_menu
         self.color_option = color_option
-        self.rect = pygame.Rect(x, y, w, h)
+        self.rect = pygame.Rect(x, y, width, height)
         self.font = pygame.font.SysFont(font_name, font_size)
         self.main = main
         self.default = default if default else main
@@ -24,9 +24,9 @@ class DropDown:
         self.active_option = -1
 
     def draw(self):
-        self.surface.fill((255, 255, 255))
+        self.surface.fill("white")
         pygame.draw.rect(self.surface, self.color_menu[self.menu_active], self.rect, 0)
-        msg = self.font.render(self.main, 1, (0, 0, 0))
+        msg = self.font.render(self.main, True, (0, 0, 0))
         self.surface.blit(msg, msg.get_rect(center=self.rect.center))
 
         if self.draw_menu:
@@ -34,7 +34,7 @@ class DropDown:
                 rect = self.rect.copy()
                 rect.y += (i + 1) * self.rect.height
                 pygame.draw.rect(self.surface, self.color_option[1 if i == self.active_option else 0], rect, 0)
-                msg = self.font.render(text, 1, (0, 0, 0))
+                msg = self.font.render(text, True, (0, 0, 0))
                 self.surface.blit(msg, msg.get_rect(center=rect.center))
 
         surface_to_texture(pygame_surface=self.surface, texture_id=self.texture_id)
