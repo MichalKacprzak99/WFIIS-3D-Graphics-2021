@@ -1,21 +1,23 @@
+from typing import List, Optional
+
 import pygame
 from OpenGL.GL import *
-
 
 from src.utils import draw_texture, surface_to_texture
 
 
 class DropDown:
-    def __init__(self, color_menu, color_option, x, y, w, h, font_name, font_size, main, options):
+    def __init__(self, color_menu, color_option, x: int, y: int, w: int, h: int,
+                 font_name: str, font_size: int, main: str, options: List[str], default: Optional[str] = None):
 
         self._init_pygame()
         self._init_openGL()
-
         self.color_menu = color_menu
         self.color_option = color_option
         self.rect = pygame.Rect(x, y, w, h)
         self.font = pygame.font.SysFont(font_name, font_size)
         self.main = main
+        self.default = default if default else main
         self.options = options
         self.draw_menu = False
         self.menu_active = False
@@ -62,10 +64,12 @@ class DropDown:
                     return self.active_option
         return -1
 
+    def reset(self):
+        self.main = self.default
+
     def _init_pygame(self):
         self.surface = pygame.Surface((800, 600))
 
     def _init_openGL(self):
 
         self.texture_id = glGenTextures(1)
-
