@@ -35,7 +35,7 @@ class Animation:
             if not self.simulation_ended:
                 self.move_blocks()
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-            drawText(50, 500, str(self.collisions_number), "arial", 64, Color('black'))
+            drawText(0, 550, f"Number of collisions: {self.collisions_number}", "arial", 32, Color('black'))
             self.draw_scene()
             pygame.display.flip()
             pygame.time.wait(self.configuration.get("fps"))
