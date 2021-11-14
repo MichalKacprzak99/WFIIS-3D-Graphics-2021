@@ -43,4 +43,3 @@ def draw_texture(texture_id):
     glEnd()
 
     glDisable(GL_TEXTURE_2D)
-
