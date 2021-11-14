@@ -22,6 +22,8 @@ class Animation:
         self.collisions_number = 0
         self.simulation_ended = False
         self.start_simulation = False
+        pygame.mixer.init()
+        self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
 
     def start_animation(self):
         self._init_pygame()
@@ -69,11 +71,13 @@ class Animation:
                 self.outside_block.vel = vel1
                 self.inside_block.vel = vel2
                 self.collisions_number += 1
+                self.collision_sound.play()
 
             elif self.inside_block.x + self.inside_block.width > 750:
 
                 self.inside_block.vel = -self.inside_block.vel
                 self.collisions_number += 1
+                self.collision_sound.play()
 
             self.outside_block.x += self.outside_block.vel
             self.inside_block.x += self.inside_block.vel
