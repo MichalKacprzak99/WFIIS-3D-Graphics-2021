@@ -38,6 +38,7 @@ class Simulation:
 
         # Constants
         self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
+        self.clock = pygame.time.Clock()
 
         # Scene
         self.floor = Square(**self.configuration["floor"])
@@ -60,13 +61,7 @@ class Simulation:
         self.collisions_number = 0
 
     def start_simulation(self):
-        clock = pygame.time.Clock()
-        width, height = self.configuration["window"].values()
-        gluPerspective(45, (1.0 * (width / height)), 0.1, 50.0)
-        glTranslatef(0.0, 0.0, -5)
-
         while True:
-
             event_list = pygame.event.get()
             for event in event_list:
                 if event.type == QUIT:
@@ -77,16 +72,16 @@ class Simulation:
                                                        self.outside_block_weight_select.valid_option])
                     if simulation_start_conditions:
                         self.simulation_started = True
-
                         # Starts outside block movement
                         self.outside_block.vel = 1 / self.configuration.get("fps")
                     if event.key == K_r:
                         self.reset_simulation()
                 self.mouse_scroll(event)
-            selected_option = self.outside_block_weight_select.update(event_list)
-            if selected_option >= 0:
-                self.outside_block.mass = int(self.outside_block_weight_select.main)
-                self.outside_block.set_size(self.outside_block_weight_select.active_option)
+            if not self.simulation_started:
+                selected_option = self.outside_block_weight_select.update(event_list)
+                if selected_option >= 0:
+                    self.outside_block.mass = int(self.outside_block_weight_select.main)
+                    self.outside_block.set_size(self.outside_block_weight_select.active_option)
 
             if self.simulation_started and not self.simulation_ended:
                 self.move_blocks()
@@ -95,7 +90,7 @@ class Simulation:
 
             pygame.display.flip()
 
-            clock.tick(self.configuration.get("fps"))
+            self.clock.tick(self.configuration.get("fps"))
 
     def draw(self):
         glClear(GL_COLOR_BUFFER_BIT)
@@ -153,8 +148,9 @@ class Simulation:
         blocks_ratio = int(math.log10(self.outside_block.mass / self.inside_block.mass))
         needed_collisions_number = int(float(str(math.pi)[:blocks_ratio + 1]) * 10 ** (blocks_ratio / 2))
         if needed_collisions_number == self.collisions_number:
+            # Only for displaying purpose
             if self.outside_block.vel < 0 and abs(
-                    self.outside_block.x - self.inside_block.x) > 10 * self.inside_block.width:
+                    self.outside_block.x - self.inside_block.x) > 5 * self.inside_block.width:
                 self.simulation_ended = True
 
     def reset_simulation(self):
