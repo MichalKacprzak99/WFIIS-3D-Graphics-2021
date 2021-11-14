@@ -12,38 +12,38 @@ from src.square import Square
 from src.ui_elements import DropDown
 from src.utils import draw_text
 
+# COLORS
+COLOR_INACTIVE = (100, 80, 255)
+COLOR_ACTIVE = (100, 200, 255)
+COLOR_LIST_INACTIVE = (255, 100, 100)
+COLOR_LIST_ACTIVE = (255, 150, 150)
+
 
 class Animation:
     def __init__(self, animation_config: Optional[Union[Path, str]] = None):
-        # Constants
+        # Configuration
         self.configuration = load_configuration(animation_config)
 
         # Initialize
         self._init_pygame()
         self._init_openGL()
 
+        # Constants
         self.collision_sound = pygame.mixer.Sound(Path(__file__).parent / "resources/clack.wav")
 
         # Scene
         self.floor = Square(**self.configuration["floor"])
         self.wall = Square(**self.configuration["wall"])
 
-        # Menu
-        COLOR_INACTIVE = (100, 80, 255)
-        COLOR_ACTIVE = (100, 200, 255)
-        COLOR_LIST_INACTIVE = (255, 100, 100)
-        COLOR_LIST_ACTIVE = (255, 150, 150)
-
-        self.outside_block_weight_select = DropDown(
-            [COLOR_INACTIVE, COLOR_ACTIVE],
-            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
-            300, 50, 300, 50,
-            None, 30,
-            "Select outside block weight", ["1", "100", "10000", "1000000"])
-
         # Blocks
         self.inside_block = Square(**self.configuration["inside_block"])
         self.outside_block = Square(**self.configuration["outside_block"])
+
+        # Menu
+        self.outside_block_weight_select = DropDown(
+            [COLOR_INACTIVE, COLOR_ACTIVE],
+            [COLOR_LIST_INACTIVE, COLOR_LIST_ACTIVE],
+            **self.configuration.get("outside_block_weigh_selector"))
 
         # Simulation control flags
         self.simulation_ended = False
@@ -101,9 +101,11 @@ class Animation:
 
     def _draw_gui(self):
         self.outside_block_weight_select.draw()
-        draw_text(0, 550, f"Number of collisions: {self.collisions_number}", "arial", 32, Color('black'))
+        draw_text(text=f"Number of collisions: {self.collisions_number}", **self.configuration.get("collision_text"))
+        draw_text(**self.configuration.get("instruction_text"))
 
     def move_blocks(self):
+        wall_collision = self.configuration["window"].get("width") - self.wall.width
         for _ in range(self.configuration.get("fps")):
             if self.outside_block.x + self.outside_block.width > self.inside_block.x:
 
@@ -122,8 +124,7 @@ class Animation:
                 self.collisions_number += 1
                 self.collision_sound.play()
 
-            elif self.inside_block.x + self.inside_block.width > 750:
-
+            elif self.inside_block.x + self.inside_block.width > wall_collision:
                 self.inside_block.vel = -self.inside_block.vel
                 self.collisions_number += 1
                 self.collision_sound.play()
@@ -146,7 +147,7 @@ class Animation:
 
     def _init_pygame(self):
         pygame.init()
-        pygame.display.set_caption('3D Graphics Project')
+        pygame.display.set_caption(self.configuration.get("title"))
         pygame.display.set_mode((list(self.configuration["window"].values())), pygame.OPENGL | pygame.DOUBLEBUF)
 
     def _init_openGL(self):
