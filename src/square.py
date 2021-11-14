@@ -1,16 +1,18 @@
+from dataclasses import field, dataclass
+from typing import Tuple
+
 from OpenGL.GL import *
 
 
+@dataclass
 class Square:
-    def __init__(self, x, y, width, height, color):
-        self.x = x
-        self.y = y
-        self.height = height
-        self.width = width
-        self.vel = 0
-        self.color = color
-        self.exponent = 0
-        self.mass = 10 ** self.exponent
+    x: int
+    y: int
+    height: int
+    width: int
+    color: Tuple[int]
+    mass: int = field(default=1)
+    vel: int = field(default=0)
 
     def draw(self):
         glColor3f(*self.color)
