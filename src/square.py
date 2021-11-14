@@ -9,7 +9,7 @@ class Square:
         self.width = width
         self.vel = 0
         self.color = color
-        self.exponent = 1
+        self.exponent = 0
         self.mass = 10 ** self.exponent
 
     def draw(self):
