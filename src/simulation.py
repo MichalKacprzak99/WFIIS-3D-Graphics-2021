@@ -55,8 +55,7 @@ class Simulation:
             **self.configuration.get("outside_block_weigh_selector"))
 
         # Simulation control flags
-        self.simulation_ended = False
-        self.simulation_started = False
+        self.simulation_running = False
 
         self.collisions_number = 0
 
@@ -68,22 +67,22 @@ class Simulation:
                     return
                 if event.type == pygame.KEYDOWN:
                     simulation_start_conditions = all([event.key == pygame.K_SPACE,
-                                                       not self.simulation_started,
+                                                       not self.simulation_running,
                                                        self.outside_block_weight_select.valid_option])
                     if simulation_start_conditions:
-                        self.simulation_started = True
+                        self.simulation_running = True
                         # Starts outside block movement
                         self.outside_block.vel = 1 / self.configuration.get("fps")
                     if event.key == K_r:
                         self.reset_simulation()
                 self.mouse_scroll(event)
-            if not self.simulation_started:
+
+            if not self.simulation_running:
                 selected_option = self.outside_block_weight_select.update(event_list)
                 if selected_option >= 0:
                     self.outside_block.mass = int(self.outside_block_weight_select.main)
                     self.outside_block.set_size(self.outside_block_weight_select.active_option)
-
-            if self.simulation_started and not self.simulation_ended:
+            else:
                 self.move_blocks()
 
             self.draw()
@@ -151,14 +150,13 @@ class Simulation:
             # Only for displaying purpose
             if self.outside_block.vel < 0 and abs(
                     self.outside_block.x - self.inside_block.x) > 5 * self.inside_block.width:
-                self.simulation_ended = True
+                self.simulation_running = False
 
     def reset_simulation(self):
         """Resets simulation when R key pressed"""
         self.collisions_number = 0
 
-        self.simulation_ended = False
-        self.simulation_started = False
+        self.simulation_running = False
 
         self.outside_block_weight_select.reset()
 
